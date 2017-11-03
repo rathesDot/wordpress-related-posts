@@ -3,18 +3,20 @@
 /**
  * @param $count
  * @param string $sort
+ *
  * @return array
  */
-function rsRelatedPosts($count, $sort = "rand"){
-
+function rsRelatedPosts($count, $sort = 'rand')
+{
     // Check if post has got minimum one category set
-    if ( !$categories = get_the_category() ) {
+    if (!$categories = get_the_category()) {
         return [];
     }
 
     // get an array with just the IDs of the categories
-    $categories = array_reduce($categories, function($v, $w) {
+    $categories = array_reduce($categories, function ($v, $w) {
         $v[] = $w->term_id;
+
         return $v;
     });
 
@@ -22,14 +24,14 @@ function rsRelatedPosts($count, $sort = "rand"){
     $powerSet = [[]];
 
     foreach ($categories as $id) {
-        foreach($powerSet as $powerSetElement) {
-            if( !empty( array_merge([$id], $powerSetElement) ) ) {
-                array_push( $powerSet, array_merge([$id], $powerSetElement) );
+        foreach ($powerSet as $powerSetElement) {
+            if (!empty(array_merge([$id], $powerSetElement))) {
+                array_push($powerSet, array_merge([$id], $powerSetElement));
             }
         }
     }
     // remove the empty array from the power set
-    array_splice($powerSet, 0,1);
+    array_splice($powerSet, 0, 1);
 
     // the posts array
     $resultPostArray = [];
@@ -44,13 +46,12 @@ function rsRelatedPosts($count, $sort = "rand"){
     // start the loop and let it run until $resultPostArray has reached
     // limit or every combinations of the category power set tried
     while (count($resultPostArray) < $count && !empty($powerSet)) {
-
         // the WP_Query
         $query = new WP_Query([
             'category__and' => $powerSet[$i],
             'orderby' => $sort,
             'post__not_in' => $excludePostIds,
-            'posts_per_page' => $count
+            'posts_per_page' => $count,
         ]);
 
         $posts = $query->get_posts();
@@ -59,12 +60,14 @@ function rsRelatedPosts($count, $sort = "rand"){
         array_splice($powerSet, $i, 1);
 
         // update iterator
-        $i--;
+        --$i;
 
         // Loop the query_posts and add ones which are not already in the
         // $resultPostArray
         foreach ($posts as $post) {
-            if (count($resultPostArray) >= $count) break;
+            if (count($resultPostArray) >= $count) {
+                break;
+            }
 
             $resultPostArray[] = $post;
             $excludePostIds[] = $post->ID;
